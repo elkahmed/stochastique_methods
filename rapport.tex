@@ -1,0 +1,258 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[top=2.54cm, bottom=2.54cm, left=2.54cm, right=2.54cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{cite}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{sfmath}
+\usepackage{parskip}
+\renewcommand{\labelitemi}{-}
+\usepackage{setspace}
+
+\graphicspath{{images/}}
+
+\setstretch{1.4}
+\setlength{\parskip}{8pt}
+\setlength{\parindent}{0pt}
+\setlength{\floatsep}{2pt}
+\setlength{\textfloatsep}{14pt}
+\setlength{\intextsep}{2pt}
+
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue}
+\captionsetup{font=small, labelfont=bf, skip=6pt}
+
+\usepackage{placeins}
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing{\section}{0pt}{16pt}{6pt}
+\titlespacing{\subsection}{0pt}{10pt}{4pt}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize\color{gray}\textit{Méthodes stochastiques - Système proie-prédateur perturbé}}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.2pt}
+\renewcommand{\footrulewidth}{0pt}
+
+%% ═════════════════════════════════════════════════════════════════
+\begin{document}
+
+%% ── Page de garde ────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{0.3cm}
+
+  \includegraphics[width=7cm]{logo_speit.png}\\[0.8em]
+  {\large\bfseries SJTU Paris Elite Institute of Technology (SPEIT)}\\[0.3em]
+  {\normalsize Shanghai Jiao Tong University}\\[0.1em]
+  {\small No. 800 Dongchuan Road, Minhang District, Shanghai, China}
+
+  \vspace{0.8cm}
+  \rule{\linewidth}{1.5pt}\\[0.6em]
+  {\LARGE\bfseries Méthodes stochastiques\\[0.4em]
+   Modélisation d'un système proie-prédateur perturbé}\\[0.4em]
+  \rule{\linewidth}{1.5pt}
+
+  \vspace{0.8cm}
+  \includegraphics[width=0.7\linewidth]{m1_populations.png}
+
+  \vspace{0.9cm}
+  {\large\textbf{Auteurs}}\\[0.4em]
+  {\large Ahmed EL KHOULY}\\[0.2em]
+  {\large Yanis RABA}
+
+  \vspace{0.7cm}
+  \begin{center}
+  \textbf{Projet} \;\; Modélisation stochastique de l'évolution de deux populations\\[4pt]
+  \textbf{Date de rendu} \;\; 14 juin 2026
+  \end{center}
+
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%% ═════════════════════════════════════════════════════════════════
+\section{Introduction}
+%% ═════════════════════════════════════════════════════════════════
+
+On étudie un système proie-prédateur de Lotka-Volterra où les proies, notées $V$, sont perturbées par un
+virus modélisé par un processus stochastique $X_t$. Le système est
+\[
+\mathrm{d}V_t = V_t\left(\tfrac23 - \tfrac43 P_t + X_t\right)\mathrm{d}t,
+\qquad
+\mathrm{d}P_t = P_t(-1 + V_t)\,\mathrm{d}t .
+\]
+Sans le virus, c'est un Lotka-Volterra classique de paramètres $a = \tfrac23$, $b = \tfrac43$, $c = 1$,
+$d = 1$, dont le point d'équilibre non trivial est $(V^*, P^*) = (1, \tfrac12)$. Le travail consiste à
+proposer un modèle pour $X_t$, à le valider sur les données, puis à étudier la probabilité d'extinction
+des deux populations. Les méthodes mobilisées sont celles du cours~\cite{cours}, mouvement brownien,
+processus d'Ornstein-Uhlenbeck, équations différentielles stochastiques et tests d'adéquation.
+
+%% ═════════════════════════════════════════════════════════════════
+\section{Modèle 1}
+%% ═════════════════════════════════════════════════════════════════
+
+On dispose d'une observation dans le fichier \texttt{virus4.csv}. La première colonne donne les victimes
+$V$, la seconde les prédateurs $P$, sur $N = 2000$ pas de temps.
+
+\FloatBarrier
+\subsection{Données et pas de temps}
+
+La figure~\ref{fig:pop} montre l'évolution des deux populations. Les victimes oscillent autour de leur
+équilibre tandis que les prédateurs déclinent vers de petites valeurs. La figure~\ref{fig:phase} donne le
+portrait de phase, qui ne se referme pas sur lui-même, signe que le virus brise le cycle déterministe.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{m1_populations.png}
+\caption{Évolution des victimes et des prédateurs.}
+\label{fig:pop}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{m1_phase.png}
+\caption{Portrait de phase $(V, P)$.}
+\label{fig:phase}
+\end{figure}
+
+Le fichier ne contient pas le temps. On remarque que l'équation des prédateurs ne contient aucun bruit,
+ni dans le modèle 1 ni dans le modèle 2. Le schéma d'Euler donne alors
+\[
+P_{k+1} = P_k + P_k(-1 + V_k)\,\Delta t
+\qquad\Longrightarrow\qquad
+\Delta t = \frac{P_{k+1} - P_k}{P_k(V_k - 1)} .
+\]
+En lisant cette quantité sur les données, en évitant les points où $V$ est proche de $1$, on trouve
+$\Delta t = 0.015$ et donc $\tau = N\,\Delta t = 30$.
+
+\FloatBarrier
+\subsection{Extraction du virus}
+
+On inverse de la même manière la première équation pour récupérer une réalisation de $X_t$
+\[
+X_k = \frac{V_{k+1} - V_k}{V_k\,\Delta t} - \tfrac23 + \tfrac43 P_k .
+\]
+En réinjectant cette suite dans le schéma d'Euler, on reconstruit exactement les victimes du fichier, ce
+qui confirme que les données proviennent d'un schéma d'Euler de pas $\Delta t = 0.015$. La
+figure~\ref{fig:X} montre la trajectoire obtenue. Elle est régulière et reste autour d'une valeur
+négative.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{m1_X.png}
+\caption{Réalisation du virus $X_t$ extraite des données.}
+\label{fig:X}
+\end{figure}
+
+\FloatBarrier
+\subsection{Un modèle d'Ornstein-Uhlenbeck}
+
+L'allure de $X_t$, régulière et à retour vers une moyenne, fait penser au processus d'Ornstein-Uhlenbeck
+vu en cours,
+\[
+\mathrm{d}X_t = -\gamma\,(X_t - m)\,\mathrm{d}t + s\,\mathrm{d}B_t .
+\]
+La figure~\ref{fig:hist} donne l'histogramme de $X$. Le schéma d'Euler de cette équation est une relation
+autorégressive d'ordre un, $X_{k+1} = m + \rho(X_k - m) + \varepsilon_k$ avec $\rho = e^{-\gamma\,\Delta t}$.
+En estimant $\rho$ et $m$ sur les données, puis en déduisant $\gamma$ et $s$, on obtient
+$\gamma \approx 0.07$, $m \approx -0.66$ et $s \approx 0.05$. Le modèle capture le retour vers une moyenne
+et reproduit le comportement du système en simulation. Ses résidus gardent une légère mémoire, ce que
+l'on signale comme limite honnête, le virus réel étant un peu plus régulier qu'un Ornstein-Uhlenbeck pur.
+
+Pour quantifier l'accord, on procède à un test de Monte-Carlo, dans l'esprit des tests d'adéquation du
+cours. On vérifie que les statistiques de $X$ restent dans la plage des valeurs produites par le modèle.
+L'amplitude ($p$-valeur $0.74$), la variance ($0.27$) et l'autocorrélation ($0.28$ à lag $1$ et $0.38$ à
+lag $50$) ne sont pas rejetées. Le modèle reproduit donc les caractéristiques globales de $X$, même si la
+distribution fine des incréments n'est pas exactement gaussienne.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.6\textwidth]{m1_hist.png}
+\caption{Histogramme de $X_t$.}
+\label{fig:hist}
+\end{figure}
+
+Pour valider le modèle sans tester directement la série bruitée, on simule un grand nombre de trajectoires
+du système couplé complet, avec le virus remplacé par notre Ornstein-Uhlenbeck. La figure~\ref{fig:valid}
+montre la bande dans laquelle passent $90\%$ de ces simulations, ainsi que leur médiane. Les victimes
+observées restent à l'intérieur de cette bande sur toute la durée, ce qui valide le choix du modèle. On ne
+compare pas le réel à une trajectoire simulée particulière, car le processus est aléatoire. On vérifie
+plutôt que les données appartiennent bien à la zone produite par le modèle.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{m1_validation.png}
+\caption{Validation. Bande contenant $90\%$ des simulations du système complet avec le modèle
+d'Ornstein-Uhlenbeck, médiane des simulations (bleu) et victimes observées (noir). Les données restent
+dans la bande.}
+\label{fig:valid}
+\end{figure}
+
+\FloatBarrier
+\subsection{Probabilité d'extinction}
+
+Une population est considérée comme éteinte au premier instant où $V_t \le 0.01$ ou $P_t \le 0.01$. Cet
+instant est un temps d'arrêt. En utilisant le modèle d'Ornstein-Uhlenbeck précédent, on simule un grand
+nombre de trajectoires du système couplé par le schéma d'Euler-Maruyama, et on observe séparément
+l'extinction des victimes et des prédateurs.
+
+Les victimes ne s'éteignent presque jamais. Sur la fenêtre $[0, 30]$, la probabilité estimée est de
+l'ordre de $0.001$, ce qui est négligeable. Cela s'explique par le fait qu'elles oscillent autour de leur
+valeur d'équilibre $1$, loin du seuil. Les prédateurs sont les seuls réellement menacés, car ils
+déclinent. Sur la fenêtre $[0, 30]$, la probabilité d'extinction estimée est d'environ $0.34$. Sur un
+horizon plus long, la quasi-totalité des trajectoires finissent par s'éteindre.
+
+On étudie alors la loi du temps d'extinction des prédateurs, en simulant sur un horizon plus long pour ne
+pas tronquer la distribution. La figure~\ref{fig:ext} montre l'histogramme de ce temps et sa fonction de
+répartition. On ajuste une loi gamma et on la valide par un test de Kolmogorov-Smirnov, dont la
+$p$-valeur d'environ $0.41$ ne conduit pas à rejeter l'hypothèse. La fonction de répartition lue en
+$t = 30$ redonne bien la probabilité d'extinction d'environ $0.34$.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{m1_extinction.png}
+\caption{Loi du temps d'extinction des prédateurs. À gauche l'histogramme et la densité gamma ajustée, à
+droite la fonction de répartition empirique et la gamma.}
+\label{fig:ext}
+\end{figure}
+
+%% ═════════════════════════════════════════════════════════════════
+\section{Modèle 2}
+%% ═════════════════════════════════════════════════════════════════
+
+\textit{(À faire. Le système ajoute un terme $\sigma\,\mathrm{d}X_t$. On estimera $\sigma$ à partir de
+\texttt{virus6.csv}, on proposera une équation différentielle stochastique pour $X_t$, puis une loi pour
+$X_\tau$.)}
+
+%% ═════════════════════════════════════════════════════════════════
+\section{Utilisation de l'intelligence artificielle}
+%% ═════════════════════════════════════════════════════════════════
+
+\textit{(À compléter. Décrire précisément l'aide apportée par l'IA et ce qui a été vérifié et repris à la
+main.)}
+
+%% ═════════════════════════════════════════════════════════════════
+\addcontentsline{toc}{section}{Références}
+\begin{thebibliography}{9}
+
+\bibitem{cours}
+A. Chillès, V. Nicolas,
+\textit{Méthodes stochastiques}, polycopié interne SPEIT, 2025-2026.
+
+\end{thebibliography}
+
+\end{document}
